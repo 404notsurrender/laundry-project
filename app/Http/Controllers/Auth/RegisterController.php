@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 
@@ -65,7 +68,7 @@ class RegisterController extends Controller
             $fotoname = $tujuan.'/'.$namafoto;
         }
 
-        User::create([
+        $user = User::create([
             'name' => $request->get('name'),
             'no_hp' => $request->get('no_hp'),
             'whatsapp' => $request->get('whatsapp'),
@@ -81,7 +84,13 @@ class RegisterController extends Controller
             'password' => Hash::make($request->get('password')),
         ]);
 
-        return redirect()->route('login')->with('success', 'Selamat pendaftaran berhasil.');
+        event(new Registered($user));
+
+        auth()->login($user);
+        Session::put('users', 'user');
+        Session::put('login', TRUE);
+
+        return redirect()->route('verification.notice')->with('success', 'Selamat pendaftaran berhasil.');
     }
 
     /**
